@@ -1,0 +1,25 @@
+.App {
+  text-align: left;
+  width: 80%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.textBox{
+  text-align: center;
+}
+
+ul {
+  list-style-type: none;
+  padding-inline-start: 0;
+  margin: 0;
+}
+
+li {
+  margin: 5px 0;
+  display: table-caption;
+}
+
+li span {
+  font-weight: bold;
+}
