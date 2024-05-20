@@ -7,37 +7,67 @@ const db = mysql.createPool({
   host: "localhost",
   user: "root",
   password: "rootroot",
-  database: "express_db"
+  database: "express_db",
 });
 
 app.use(express.json());
 app.use(cors());
 
-app.get("/api/get/users", (req, res) => {
-  const sqlSelect = "SELECT * FROM users ORDER BY id";
+// 顧客情報を取得する
+app.get("/api/get/customer_info", (req, res) => {
+  const sqlSelect = "SELECT * FROM customer_info ORDER BY id";
   db.query(sqlSelect, (err, result) => {
     if (err) {
       console.error(err);
-      res.status(500).send("Error retrieving users from the database");
+      res.status(500).send("Error retrieving customer_info from the database");
     } else {
+      // 顧客情報をJSON形式でレスポンスとして返す
       res.send(result);
     }
   });
 });
 
-app.post("/api/insert/user", (req, res) => {
-  const { name, email } = req.body;
-  const sqlInsert = "INSERT INTO users (name, email) VALUES (?, ?)";
-  db.query(sqlInsert, [name, email], (err, result) => {
-    if (err) {
-      console.error(err);
-      res.status(500).send("Failed to insert new user");
-    } else {
-      res.status(200).send("User added successfully");
+// 顧客追加
+app.post("/api/insert/customer_info", (req, res) => {
+  const {
+    appointmentDate,
+    salesContract,
+    companyName,
+    companyNameKana,
+    representativeName,
+    capital,
+    employees,
+    url,
+    currentContracts,
+    appointmentDepartment,
+  } = req.body;
+  const sqlInsert =
+    "INSERT INTO customer_info (appointmentDate,salesContract,companyName,companyNameKana,representativeName,capital,employees,url,currentContracts,appointmentDepartment) VALUES (?, ?)";
+  db.query(
+    sqlInsert,
+    [
+      appointmentDate,
+      salesContract,
+      companyName,
+      companyNameKana,
+      representativeName,
+      capital,
+      employees,
+      url,
+      currentContracts,
+      appointmentDepartment,
+    ],
+    (err, result) => {
+      if (err) {
+        console.error(err);
+        res.status(500).send("Failed to insert new user");
+      } else {
+        res.status(200).send("User added successfully");
+      }
     }
-  });
+  );
 });
 
 app.listen(3001, () => {
-  console.log('Server running on port 3001');
+  console.log("Server running on port 3001");
 });
