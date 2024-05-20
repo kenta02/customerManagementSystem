@@ -26,3 +26,4 @@ customer_info用.sql
 test.sql
 .gitignore
 client/src/hooks/useCategories.js
+package.json

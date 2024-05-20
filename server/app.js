@@ -13,10 +13,24 @@ const db = mysql.createPool({
 app.use(express.json());
 app.use(cors());
 
-// 顧客情報を取得する
+// 顧客情報を全件取得する
 app.get("/api/get/customer_info", (req, res) => {
   const sqlSelect = "SELECT * FROM customer_info ORDER BY id";
   db.query(sqlSelect, (err, result) => {
+    if (err) {
+      console.error(err);
+      res.status(500).send("Error retrieving customer_info from the database");
+    } else {
+      // 顧客情報をJSON形式でレスポンスとして返す
+      res.send(result);
+    }
+  });
+});
+
+// 顧客情報を1件取得する
+app.get("/api/get/customer_info/:id", (req, res) => {
+  const sqlSelect = "SELECT * FROM customer_info WHERE id = ?";
+  db.query(sqlSelect, [req.params.id], (err, result) => {
     if (err) {
       console.error(err);
       res.status(500).send("Error retrieving customer_info from the database");
