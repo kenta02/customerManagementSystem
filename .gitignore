@@ -22,3 +22,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 client/public/favicon.ico
+customer_info用.sql
+test.sql
+.gitignore
+client/src/hooks/useCategories.js
