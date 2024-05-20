@@ -5,7 +5,7 @@
   margin: 0 auto;
 }
 
-.textBox{
+.textBox {
   text-align: center;
 }
 
@@ -22,4 +22,14 @@ li {
 
 li span {
   font-weight: bold;
+}
+
+.customerList th {
+  background-color: green;
+  color: #fff;
+  font-size: 16px;
+}
+
+.customerList td {
+  border: 1px solid #ccc;
 }
