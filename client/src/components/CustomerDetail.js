@@ -61,6 +61,23 @@ const CustomerDetailPage = () => {
             URL
           </a>
         </p>
+
+        <h2>[商談履歴]</h2>
+
+        <div className="meeting-list">
+          商談日：
+          <input type="date" placeholder="商談日" />
+          <br />
+          商談内容：
+          <input type="text" placeholder="商談内容" />
+          <br />
+          目標数値：
+          <input type="text" placeholder="目標数値" />
+          <br />
+          目標数値と現在数値までいくらか
+          <input type="text" placeholder="目標数値と現在数値までいくらか" />
+        </div>
+        <br />
       </div>
     </>
   );
