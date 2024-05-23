@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
-import App from "../App";
-
 import { useParams } from "react-router-dom";
+import {
+  addNegotiationHistory,
+  getCustomerInfo,
+  getNegotiationHistory,
+} from "../api/api";
 
 // 詳細画面
 const CustomerDetailPage = () => {
@@ -18,7 +21,7 @@ const CustomerDetailPage = () => {
   //日付用のステート
   const [negotiationDate, setNegotiationDate] = useState("");
 
-  //商談内容用のステート
+  //商談履歴の状態をオブジェクトの配列として管理
   const [details, setDetails] = useState("");
 
   // todo用のステート
@@ -26,72 +29,17 @@ const CustomerDetailPage = () => {
 
   // APIから顧客情報を取得する
   useEffect(() => {
-    // APIからデータを取得する
-    const url = `http://localhost:3001/api/get/customer_info/${id}`;
-    console.log(url);
-
-    fetch(url, {
-      method: "GET",
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        // console.log(data);
-
-        //　特定のIDに対応するレコードを探す
-        const record = data.find((item) => item.id === parseInt(id));
-        if (record) {
-          // 見つかったら単一のレコードをセットする
-          setCustomerDetail(record);
-        } else {
-          console.log("該当するレコードは見つかりません。");
-        }
-      })
-      .catch(
-        (error) => {
-          console.log(error);
-        },
-        [id]
-      );
-  }, [id]);
-
-  // APIから商談履歴を取得する
-  useEffect(() => {
-    // APIから商談履歴のデータを取得する
-    const url = `http://localhost:3001/api/get/negotiation_history/`;
-    fetch(url, { method: "GET" })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log(data);
-        console.log("検証開始");
-        // 顧客IDと一致するレコードから日付だけを抽出する
-        const filteredData = data.filter(
-          // 　日付だけ抽出する
-          (item) => item.customer_id === parseInt(id)
-        );
-
-        // 日付の配列を作成する
-        const negotiationDate = filteredData.map((index) => {
-          return index.date;
-        });
-
-        // 日付をUTCからローカルタイムゾーンに変換する
-        const firstDate = new Date(filteredData[0].date);
-        const localDate = new Date(
-          firstDate.getTime() - firstDate.getTimezoneOffset() * 60000
-        );
-        const filteredDate = localDate.toISOString().split("T")[0];
-
-        if (data) {
-          // 見つかったレコードをセットする
-          setNegotiationHistory(data);
-          // 抽出した最初の日付をinputエリアにセットする
-          setSelectedDate(filteredDate);
-        } else {
-          console.log("該当するレコードは見つかりません。");
-        }
-      })
-      .catch((error) => console.log(error));
-  }, [customer_id, id]);
+    getCustomerInfo(id).then((data) => {
+      //　特定のIDに対応するレコードを探す
+      const record = data.find((item) => item.id === parseInt(id));
+      if (record) {
+        // 見つかったら単一のレコードをセットする
+        setCustomerDetail(record);
+      } else {
+        console.log("該当するレコードは見つかりません。");
+      }
+    });
+  });
 
   if (!customerDetail) {
     return <>Loading....</>;
@@ -99,21 +47,26 @@ const CustomerDetailPage = () => {
 
   // 追加ボタンがクリックされた時に実行される関数
   const onClickAdd = () => {
-    console.log("追加ボタン用の関数が実行されました");
     // inputエリアが空の場合は押しても何もしない。
     if (!negotiationDate || !details) {
+      console.log("入力値が空のため追加できません");
       return;
     }
 
     // 新しい商談履歴オブジェクトを作成する;
     const newTodos = { negotiationDate, details };
 
-    // スプレッド構文を使って新しい配列を作成する
-    setTodos([...todos, newTodos]);
-
-    // 入力フィールドをクリアする
-    setNegotiationDate("");
-    setDetails("");
+    // 新しいTODOをサーバー側に送信
+    addNegotiationHistory(id, negotiationDate, details)
+      .then((data) => {
+        setTodos([...todos, newTodos]);
+        // 入力フィールドをクリアする
+        setNegotiationDate("");
+        setDetails("");
+      })
+      .catch((error) => {
+        console.log("商品履歴の追加に失敗しました。。。", error);
+      });
   };
 
   return (
@@ -142,17 +95,6 @@ const CustomerDetailPage = () => {
           </a>
         </p>
         <h2>[商談履歴]</h2>
-        ここには、商談履歴が表示されます。↓
-        <br />
-        ※商談履歴はTODOリストの形で追加していく形となります。
-        <br />
-        ※以下はモックデータです。
-        {negotiationHistory.map((history, index) => (
-          <div key={index}>
-            <p>商談日：{new Date(history.date).toLocaleDateString()}</p>
-            <p>商談内容：{history.details}</p>
-          </div>
-        ))}
         <p>
           ----------------------------------------------------------------------------------------
         </p>
