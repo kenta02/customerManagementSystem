@@ -6,6 +6,7 @@ import "../App.css";
 import { styled } from "@mui/system";
 import { DateTime } from "luxon";
 
+// Material-UIのDataGridをカスタマイズするためのスタイル設定
 const StyledDataGrid = styled(DataGrid)(({ theme }) => ({
   "&.MuiDataGrid-columnHeaders": {
     backgroundColor: "#43A047", // 緑色
@@ -16,6 +17,8 @@ const StyledDataGrid = styled(DataGrid)(({ theme }) => ({
 const CustomerList = () => {
   // APIからデータを取得する
   const [customerList, setCustomerList] = useState([]);
+
+  // ページがロードされたときにAPIからデータを取得する副作用を実行
   useEffect(() => {
     // APIからデータを取得する
     const url = "http://localhost:3001/api/get/customer_info";
@@ -23,8 +26,9 @@ const CustomerList = () => {
       .then((response) => response.json())
       .then((data) => setCustomerList(data))
       .catch((error) => console.log("データ取得エラー：", error));
-  }, []);
+  }, []); // 依存リストが空なので、最初のレンダリング時にのみ実行
 
+    // DataGridの列定義
   const columns = [
     {
       field: "appointmentDate",
