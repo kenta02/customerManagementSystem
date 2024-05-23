@@ -29,23 +29,73 @@ const CustomerDetailPage = () => {
 
   // APIから顧客情報を取得する
   useEffect(() => {
-    getCustomerInfo(id).then((data) => {
-      //　特定のIDに対応するレコードを探す
-      const record = data.find((item) => item.id === parseInt(id));
-      if (record) {
-        // 見つかったら単一のレコードをセットする
-        setCustomerDetail(record);
-      } else {
-        console.log("該当するレコードは見つかりません。");
-      }
-    });
-  });
+    // APIからデータを取得する
+    const url = `http://localhost:3001/api/get/customer_info/${id}`;
+    console.log(url);
 
+    fetch(url, {
+      method: "GET",
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data);
+
+        //　特定のIDに対応するレコードを探す
+        const record = data.find((item) => item.id === parseInt(id));
+        if (record) {
+          // 見つかったら単一のレコードをセットする
+          setCustomerDetail(record);
+        } else {
+          console.log("該当するレコードは見つかりません。");
+        }
+      })
+      .catch(
+        (error) => {
+          console.log(error);
+        },
+        [id]
+      );
+  }, [id]);
+
+  // 商談履歴を取得する
+  useEffect(() => {
+    // APIからデータを取得する
+    const url = `http://localhost:3001/api/get/negotiation_history/`;
+    console.log(url);
+
+    fetch(url, {
+      method: "GET",
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        setNegotiationHistory(data);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }, [id, customer_id]);
+
+  // 商談履歴を取得する関数
+  const fetchNegotiationHistory = () => {
+    // APIからデータを取得する
+    const url = `http://localhost:3001/api/get/negotiation_history/`;
+    console.log(url);
+    fetch(url, { method: "GET" })
+      .then((response) => response.json())
+      .then((data) => {
+        setNegotiationHistory(data);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
+
+  // 顧客情報がない場合ローディング中にする
   if (!customerDetail) {
     return <>Loading....</>;
   }
 
-  // 追加ボタンがクリックされた時に実行される関数
+  // 追加ボタンがクリックされた時の処理
   const onClickAdd = () => {
     // inputエリアが空の場合は押しても何もしない。
     if (!negotiationDate || !details) {
@@ -53,19 +103,23 @@ const CustomerDetailPage = () => {
       return;
     }
 
-    // 新しい商談履歴オブジェクトを作成する;
-    const newTodos = { negotiationDate, details };
+    // 新しい商談履歴オブジェクトを作成する
+    const newTodo = { negotiationDate, details };
 
-    // 新しいTODOをサーバー側に送信
+    // 新しい商談履歴をサーバーに送信
     addNegotiationHistory(id, negotiationDate, details)
       .then((data) => {
-        setTodos([...todos, newTodos]);
+        // 追加後に商談履歴を再取得して表示する
+        fetchNegotiationHistory();
+
+        setTodos([...todos, newTodo]);
+
         // 入力フィールドをクリアする
         setNegotiationDate("");
         setDetails("");
       })
       .catch((error) => {
-        console.log("商品履歴の追加に失敗しました。。。", error);
+        console.log("商談履歴の追加に失敗しました。。。", error);
       });
   };
 
@@ -124,12 +178,16 @@ const CustomerDetailPage = () => {
 
           <div className="todolist-area">
             <ul>
-              {todos.map((todo, index) => (
-                <li key={index}>
-                  商談日：{todo.negotiationDate} <br />
-                  商談内容：{todo.details}
-                </li>
-              ))}
+              {negotiationHistory.length > 0 ? (
+                negotiationHistory.map((history, index) => (
+                  <li key={index}>
+                    商談日：{new Date(history.date).toLocaleDateString()} <br />
+                    商談内容:{history.details}
+                  </li>
+                ))
+              ) : (
+                <li>表示するデータがありません</li>
+              )}
             </ul>
           </div>
         </div>
