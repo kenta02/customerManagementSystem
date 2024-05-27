@@ -4,6 +4,7 @@ import {
   addNegotiationHistory,
   getCustomerInfo,
   getNegotiationHistory,
+  saveGoalValueToDB,
 } from "../api/api";
 
 // 詳細画面
@@ -15,8 +16,8 @@ const CustomerDetailPage = () => {
   // 商談履歴用のステート
   const [negotiationHistory, setNegotiationHistory] = useState([]);
 
-  //日付用のステート
-  const [selectedDate, setSelectedDate] = useState("");
+  // //日付用のステート
+  // const [selectedDate, setSelectedDate] = useState("");
 
   //日付用のステート
   const [negotiationDate, setNegotiationDate] = useState("");
@@ -27,19 +28,18 @@ const CustomerDetailPage = () => {
   // todo用のステート
   const [todos, setTodos] = useState([]);
 
+  // 目標数値用のステート
+  const [targetValue, setTargetValue] = useState("");
+
   // APIから顧客情報を取得する
   useEffect(() => {
     // APIからデータを取得する
     const url = `http://localhost:3001/api/get/customer_info/${id}`;
-    console.log(url);
-
     fetch(url, {
       method: "GET",
     })
       .then((response) => response.json())
       .then((data) => {
-        console.log(data);
-
         //　特定のIDに対応するレコードを探す
         const record = data.find((item) => item.id === parseInt(id));
         if (record) {
@@ -55,6 +55,19 @@ const CustomerDetailPage = () => {
         },
         [id]
       );
+  }, [id]);
+
+  // 目標数値を取得する
+  useEffect(() => {
+    // APIからデータを取得する
+    const url = `http://localhost:3001/api/get/customer_goals/${id}}`;
+    console.log(url);
+    fetch(url, { method: "GET" })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data[0].goal_value);
+        setTargetValue(data[0].goal_value);
+      });
   }, [id]);
 
   // 商談履歴を取得する
@@ -113,7 +126,6 @@ const CustomerDetailPage = () => {
         fetchNegotiationHistory();
 
         setTodos([...todos, newTodo]);
-
         // 入力フィールドをクリアする
         setNegotiationDate("");
         setDetails("");
@@ -121,6 +133,20 @@ const CustomerDetailPage = () => {
       .catch((error) => {
         console.log("商談履歴の追加に失敗しました。。。", error);
       });
+  };
+
+  // 目標数値をDBに保存する
+  const onBlurSaveTargetValue = () => {
+    if (targetValue === "" || isNaN(targetValue)) {
+      //　入力エリアがなにも入っていない場合は何もしない
+      console.log("目標数値が空です");
+      return;
+    }
+    // 目標数値をサーバーに送信
+    saveGoalValueToDB(id, targetValue).then((data) => {
+      console.log(data);
+    });
+    console.log("目標数値をDBに保存しました。");
   };
 
   return (
@@ -149,13 +175,9 @@ const CustomerDetailPage = () => {
           </a>
         </p>
         <h2>[商談履歴]</h2>
-        <p>
-          ----------------------------------------------------------------------------------------
-        </p>
-        <p>ここから作成してください↓</p>
         <div>
           <div className="input-area">
-            <label htmlFor="negotiation-date">商談日：</label>
+            <label aria-label="negotiation-date">商談日：</label>
             <input
               type="date"
               id="negotiationDate"
@@ -163,7 +185,7 @@ const CustomerDetailPage = () => {
               onChange={(e) => setNegotiationDate(e.target.value)}
             />
             <br />
-            <label htmlFor="negotiation-details">商談内容：</label>
+            <label aria-label="negotiation-details">商談内容：</label>
             <input
               type="text"
               id="negotiationDetails"
@@ -174,8 +196,7 @@ const CustomerDetailPage = () => {
             <button onClick={onClickAdd}>追加</button>
           </div>
           <p>---------------------------------------------------------</p>
-          <p>[履歴一覧]↓</p>
-
+          <p>[履歴一覧]</p>
           <div className="todolist-area">
             <ul>
               {negotiationHistory.length > 0 ? (
@@ -189,6 +210,18 @@ const CustomerDetailPage = () => {
                 <li>表示するデータがありません</li>
               )}
             </ul>
+          </div>
+
+          {/* 目標数値エリア */}
+          <div className="goal-area">
+            <label aria-label="goal">目標数値:</label>
+            <input
+              type="number"
+              id="targetGoals"
+              value={isNaN(targetValue) ? "" : targetValue} // NaNの場合は空文字を表示
+              onChange={(e) => setTargetValue(parseInt(e.target.value))} // 数値に変換
+              onBlur={onBlurSaveTargetValue} // inputエリアへの入力終了時に目標数値をDBに保存
+            />
           </div>
         </div>
       </div>

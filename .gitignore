@@ -29,3 +29,4 @@ client/src/hooks/useCategories.js
 package.json
 negotiation_history用.sql
 todoList.sql
+customer_goals.sql
