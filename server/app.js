@@ -149,6 +149,44 @@ app.put("/api/update/negotiation_history/:customer_id", (req, res) => {
   );
 });
 
+//--------------- 顧客数値管理テーブル--------------------------//
+
+//　目標数値を設定する
+app.post(`/api/set/customer_goals/:customer_id`, (req, res) => {
+  const { goal_value } = req.body;
+  // データがあれば更新し、なければ追加する
+  const sqlInsert =
+    "INSERT INTO customer_goals (customer_id, goal_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE goal_value = ?";
+
+  // db.queryの第２引数の配列にはupdateとinsert用の値を入れるのでgoal_valueを２回使っている
+  db.query(
+    sqlInsert,
+    [req.params.customer_id, goal_value, goal_value],
+    (err, result) => {
+      if (err) {
+        console.error(err);
+        res.status(500).send("顧客数値の更新に失敗しました。");
+      } else {
+        res.status(200).send("顧客数値を更新しました。");
+      }
+    }
+  );
+});
+
+// 目標数値を取得する
+app.get(`/api/get/customer_goals/:customer_id`, (req, res) => {
+  const sqlSelect =
+    "SELECT goal_value FROM customer_goals WHERE customer_id = ?";
+  db.query(sqlSelect, [req.params.customer_id], (err, result) => {
+    if (err) {
+      console.error(err);
+      res.status(500).send("顧客数値の取得に失敗しました。");
+    } else {
+      res.status(200).send(result);
+    }
+  });
+});
+
 // サーバーの起動
 app.listen(3001, () => {
   console.log("Server running on port 3001");
