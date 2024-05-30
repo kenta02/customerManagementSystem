@@ -5,149 +5,123 @@ import {
   getCustomerInfo,
   getNegotiationHistory,
   saveGoalValueToDB,
+  getCustomerGoals,
 } from "../api/api";
 
 // 詳細画面
 const CustomerDetailPage = () => {
-  const { id, customer_id } = useParams();
+  // ルートパラメータから顧客IDを取得
+  const { id } = useParams();
 
-  // 顧客情報の詳細用のステート
+  // 各ステートを管理
   const [customerDetail, setCustomerDetail] = useState(null);
-  // 商談履歴用のステート
   const [negotiationHistory, setNegotiationHistory] = useState([]);
-
-  // //日付用のステート
-  // const [selectedDate, setSelectedDate] = useState("");
-
-  //日付用のステート
   const [negotiationDate, setNegotiationDate] = useState("");
-
-  //商談履歴の状態をオブジェクトの配列として管理
   const [details, setDetails] = useState("");
-
-  // todo用のステート
   const [todos, setTodos] = useState([]);
-
-  // 目標数値用のステート
   const [targetValue, setTargetValue] = useState("");
 
-  // APIから顧客情報を取得する
+  // データを一括で取得する
   useEffect(() => {
-    // APIからデータを取得する
-    const url = `http://localhost:3001/api/get/customer_info/${id}`;
-    fetch(url, {
-      method: "GET",
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        //　特定のIDに対応するレコードを探す
-        const record = data.find((item) => item.id === parseInt(id));
-        if (record) {
-          // 見つかったら単一のレコードをセットする
-          setCustomerDetail(record);
+    const fetchData = async () => {
+      try {
+        // 顧客情報を取得
+        const customerData = await getCustomerInfo(id);
+
+        console.log("詳細：");
+        console.log(customerDetail);
+
+        if (customerData) {
+          setCustomerDetail(customerData);
+          console.log("Set Customer Detail:", customerData); // デバッグ用ログ
         } else {
-          console.log("該当するレコードは見つかりません。");
+          console.error("該当する顧客情報が見つかりませんでした。");
         }
-      })
-      .catch(
-        (error) => {
-          console.log(error);
-        },
-        [id]
-      );
-  }, [id]);
 
-  // 目標数値を取得する
-  useEffect(() => {
-    // APIからデータを取得する
-    const url = `http://localhost:3001/api/get/customer_goals/${id}}`;
-    console.log(url);
-    fetch(url, { method: "GET" })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log(data[0].goal_value);
-        setTargetValue(data[0].goal_value);
-      });
-  }, [id]);
+        // 商談履歴を取得
+        const negotiationData = await getNegotiationHistory();
+        setNegotiationHistory(negotiationData);
+      } catch (error) {
+        console.error("データの取得に失敗しました。", error);
+      }
 
-  // 商談履歴を取得する
-  useEffect(() => {
-    // APIからデータを取得する
-    const url = `http://localhost:3001/api/get/negotiation_history/`;
-    console.log(url);
+      //　顧客目標数値を取得
+      const goalData = await getCustomerGoals(id);
+      console.log(goalData);
+      if (goalData) {
+        setTargetValue(goalData.goal_value);
+      } else {
+        console.error("目標数値が見つかりませんでした。");
+      }
+    };
+    fetchData();
+  }, [id]); //idが変更されるたびに実行
 
-    fetch(url, {
-      method: "GET",
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        setNegotiationHistory(data);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  }, [id, customer_id]);
-
-  // 商談履歴を取得する関数
-  const fetchNegotiationHistory = () => {
-    // APIからデータを取得する
-    const url = `http://localhost:3001/api/get/negotiation_history/`;
-    console.log(url);
-    fetch(url, { method: "GET" })
-      .then((response) => response.json())
-      .then((data) => {
-        setNegotiationHistory(data);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
+  // 商談履歴を再取得する
+  const fetchNegotiationHistory = async () => {
+    try {
+      const negotiationData = await getNegotiationHistory();
+      console.log("Negotiation History (refetch):", negotiationData); // デバッグ用ログ
+      setNegotiationHistory(negotiationData);
+    } catch (error) {
+      console.error("顧客履歴の取得に失敗しました。", error);
+    }
   };
 
-  // 顧客情報がない場合ローディング中にする
-  if (!customerDetail) {
-    return <>Loading....</>;
-  }
-
+  /*
+   ****************************************
+   * イベント処理
+   ****************************************
+   */
   // 追加ボタンがクリックされた時の処理
-  const onClickAdd = () => {
+  const onClickAdd = async () => {
     // inputエリアが空の場合は押しても何もしない。
     if (!negotiationDate || !details) {
       console.log("入力値が空のため追加できません");
       return;
     }
+    try {
+      // 新しい商談履歴を追加
+      await addNegotiationHistory(id, negotiationDate, details);
+      //　追加後に商談履歴を再取得
+      fetchNegotiationHistory();
 
-    // 新しい商談履歴オブジェクトを作成する
-    const newTodo = { negotiationDate, details };
+      // TOdoリストに新しい商談履歴を追加する
+      // const newTodo = { negotiationDate, details };
+      //  setTodos([...todos, newTodo]);
+      setTodos([...todos, { negotiationDate, details }]);
 
-    // 新しい商談履歴をサーバーに送信
-    addNegotiationHistory(id, negotiationDate, details)
-      .then((data) => {
-        // 追加後に商談履歴を再取得して表示する
-        fetchNegotiationHistory();
-
-        setTodos([...todos, newTodo]);
-        // 入力フィールドをクリアする
-        setNegotiationDate("");
-        setDetails("");
-      })
-      .catch((error) => {
-        console.log("商談履歴の追加に失敗しました。。。", error);
-      });
+      //入力フィールドをクリア
+      setNegotiationDate("");
+      setDetails("");
+    } catch (error) {
+      console.error("商談履歴の追加に失敗しました。", error);
+    }
   };
 
   // 目標数値をDBに保存する
-  const onBlurSaveTargetValue = () => {
+  const onBlurSaveTargetValue = async () => {
     if (targetValue === "" || isNaN(targetValue)) {
-      //　入力エリアがなにも入っていない場合は何もしない
       console.log("目標数値が空です");
       return;
     }
-    // 目標数値をサーバーに送信
-    saveGoalValueToDB(id, targetValue).then((data) => {
-      console.log(data);
-    });
-    console.log("目標数値をDBに保存しました。");
+    try {
+      // 目標数値をDBに保存
+      await saveGoalValueToDB(id, targetValue);
+      console.log("目標数値をDBに保存しました。");
+    } catch (error) {
+      console.error("目標数値の保存に失敗しました。", error);
+    }
   };
+
+  // 顧客情報がない場合にローディング中の表示を設定する
+  if (!customerDetail) {
+    return <div>Loading...</div>;
+  }
+  // 売上と目標数値の差分を計算
+  const salesContract = customerDetail.salesContract;
+  const goalValue = targetValue || 0;
+  const difference = salesContract - goalValue;
 
   return (
     <>
@@ -222,6 +196,11 @@ const CustomerDetailPage = () => {
               onChange={(e) => setTargetValue(parseInt(e.target.value))} // 数値に変換
               onBlur={onBlurSaveTargetValue} // inputエリアへの入力終了時に目標数値をDBに保存
             />
+            <br />
+            <p>目標数値と現在数値までいくらか</p>
+
+            {/* 現在の売上-目標数値を差し引いた数値を計算し画面に表示させる。 */}
+            <p>残り：{difference}</p>
           </div>
         </div>
       </div>

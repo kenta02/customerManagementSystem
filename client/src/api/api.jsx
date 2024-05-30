@@ -1,69 +1,72 @@
 import axios from "axios";
 
+const api = axios.create({
+  baseURL: `http://localhost:3001/api`,
+  headers: { "Content-Type": "application/json" },
+});
+
 // 顧客情報を取得する
 export const getCustomerInfo = async (id) => {
-  const url = `http://localhost:3001/api/get/customer_info/${id}`;
-
   try {
-    const response = await fetch(url, { method: "GET" });
-    const data = await response.json();
-    return data;
+    const response = await api.get(`/get/customer_info/${id}`);
+    // response.data にサーバーからのレスポンスデータが含まれる
+    console.log("ログ検証：");
+    console.log(response.data);
+    return response.data[0];
   } catch (error) {
-    console.log(error);
+    console.error(error);
     throw new Error("顧客情報の取得に失敗しました。");
   }
 };
 
 export const getNegotiationHistory = async (id) => {
-  const url = `http://localhost:3001/api/negotiation_history/`;
-
   try {
-    const response = await fetch(url, { method: "GET" });
-    const data = await response.json();
-    return data;
+    const response = await api.get(`/get/negotiation_history`);
+    console.log("API getNegotiationHistory response:", response.data);
+    return response.data; //商談履歴データを返す
   } catch (error) {
-    console.log(error);
-    throw new Error("商談履歴のÚ取得に失敗しました。");
+    console.error("商談履歴の取得に失敗しました。", error);
+    throw new Error("商談履歴の取得に失敗しました。");
   }
 };
 
 // DBに商談履歴を追加する
 export const addNegotiationHistory = async (customer_id, date, details) => {
-  const url = `http://localhost:3001/api/add/negotiation_history`;
-
   try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ customer_id, date, details }),
+    const response = await api.post(`/add/negotiation_history`, {
+      customer_id,
+      date,
+      details,
     });
-    if (!response.ok) {
-      throw new Error(`HTTP error status: ${response.status}`);
-    }
+    // 追加された商談履歴のデータを返す
+    return response.data;
   } catch (error) {
-    console.log(error);
+    console.error("商談履歴の追加に失敗しました。", error);
     throw new Error("商談履歴の追加に失敗しました。");
   }
 };
 
 // DBの目標数値を更新する。（※データがない場合は追加することとする）
 export const saveGoalValueToDB = async (customer_id, goal_value) => {
-  const url = `http://localhost:3001/api/set/customer_goals/${customer_id}`;
   try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ customer_id, goal_value }),
+    const response = await api.post(`/set/customer_goals/${customer_id}`, {
+      goal_value,
     });
-    if (!response.ok) {
-      throw new Error(`HTTP error status: ${response.status}`);
-    }
+    // 更新された目標数値のデータを返す
+    return response.data;
   } catch (error) {
-    console.log(error);
+    console.error("目標数値の更新に失敗しました。", error);
     throw new Error("目標数値の更新に失敗しました。");
+  }
+};
+
+// 顧客目標数値を取得する
+export const getCustomerGoals = async (id) => {
+  try {
+    const response = await api.get(`/get/customer_goals/${id}`);
+    return response.data[0];
+  } catch (error) {
+    console.error("顧客目標数値の取得に失敗しました。", error);
+    throw new Error("顧客目標数値の取得に失敗しました。");
   }
 };
